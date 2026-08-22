@@ -1,3 +1,4 @@
+import os
 from dotenv import load_dotenv
 load_dotenv()
 from flask import Flask
@@ -8,7 +9,7 @@ from models import db
 app = Flask(__name__)
 
 # --- Database config ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:Vishal%40123@localhost/smartcompany_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- JWT config ---

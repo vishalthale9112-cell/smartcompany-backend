@@ -9,7 +9,12 @@ from models import db
 app = Flask(__name__)
 
 # --- Database config ---
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+database_url = os.getenv('DATABASE_URL')
+
+if database_url and database_url.startswith("mysql://"):
+    database_url = database_url.replace("mysql://", "mysql+mysqlconnector://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # --- JWT config ---

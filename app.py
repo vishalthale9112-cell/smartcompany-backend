@@ -78,8 +78,5 @@ app.register_blueprint(tickets_bp, url_prefix='/api/tickets')
 from routes.ai_routes import ai_bp
 app.register_blueprint(ai_bp, url_prefix='/api/ai')
 
-with app.app_context():
-    db.create_all()
-
 if __name__ == '__main__':
     app.run(debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true', port=5000)

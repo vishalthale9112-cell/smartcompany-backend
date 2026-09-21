@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Ticket, User
+from services.ticket_priority import predict_priority
 
 tickets_bp = Blueprint('tickets', __name__)
 
@@ -16,6 +17,9 @@ def list_tickets():
             'subject': t.subject,
             'description': t.description,
             'category': t.category,
+            'priority': t.priority,
+            'priority_confidence': t.priority_confidence,
+            'priority_source': t.priority_source,
             'status': t.status,
             'raised_by': t.raiser.name if t.raiser else None,
             'assigned_to': t.handler.name if t.handler else None,
@@ -49,10 +53,14 @@ def create_ticket():
     if not subject:
         return jsonify({'error': 'subject is required'}), 400
 
+    prediction = predict_priority(subject, data.get('description'))
     new_ticket = Ticket(
         subject=subject,
         description=data.get('description'),
         category=data.get('category', 'general'),
+        priority=prediction['priority'],
+        priority_confidence=prediction['confidence'],
+        priority_source=prediction['source'],
         status=data.get('status', 'open'),
         raised_by=raiser_id,
         assigned_to=data.get('assigned_to'),
@@ -60,7 +68,11 @@ def create_ticket():
     db.session.add(new_ticket)
     db.session.commit()
 
-    return jsonify({'message': 'Ticket created', 'id': new_ticket.id}), 201
+    return jsonify({
+        'message': 'Ticket created',
+        'id': new_ticket.id,
+        'ai_prediction': prediction,
+    }), 201
 
 
 @tickets_bp.route('/<int:ticket_id>', methods=['PUT'])

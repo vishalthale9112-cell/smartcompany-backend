@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Ticket, User
 from services.ticket_priority import predict_priority
+from services.ticket_category import predict_category
 
 tickets_bp = Blueprint('tickets', __name__)
 
@@ -17,6 +18,8 @@ def list_tickets():
             'subject': t.subject,
             'description': t.description,
             'category': t.category,
+            'category_confidence': t.category_confidence,
+            'category_source': t.category_source,
             'priority': t.priority,
             'priority_confidence': t.priority_confidence,
             'priority_source': t.priority_source,
@@ -53,14 +56,17 @@ def create_ticket():
     if not subject:
         return jsonify({'error': 'subject is required'}), 400
 
-    prediction = predict_priority(subject, data.get('description'))
+    priority_prediction = predict_priority(subject, data.get('description'))
+    category_prediction = predict_category(subject, data.get('description'))
     new_ticket = Ticket(
         subject=subject,
         description=data.get('description'),
-        category=data.get('category', 'general'),
-        priority=prediction['priority'],
-        priority_confidence=prediction['confidence'],
-        priority_source=prediction['source'],
+        category=category_prediction['category'],
+        category_confidence=category_prediction['confidence'],
+        category_source=category_prediction['source'],
+        priority=priority_prediction['priority'],
+        priority_confidence=priority_prediction['confidence'],
+        priority_source=priority_prediction['source'],
         status=data.get('status', 'open'),
         raised_by=raiser_id,
         assigned_to=data.get('assigned_to'),
@@ -71,7 +77,10 @@ def create_ticket():
     return jsonify({
         'message': 'Ticket created',
         'id': new_ticket.id,
-        'ai_prediction': prediction,
+        'ai_prediction': {
+            'priority': priority_prediction,
+            'category': category_prediction,
+        },
     }), 201
 
 

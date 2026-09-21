@@ -60,6 +60,9 @@ class Ticket(db.Model):
     subject = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.String(50), default='general')  # IT / HR / general
+    priority = db.Column(db.String(20), default='medium', nullable=False)
+    priority_confidence = db.Column(db.Float, nullable=True)
+    priority_source = db.Column(db.String(20), default='manual', nullable=False)
     status = db.Column(db.String(20), default='open')       # open / in_progress / resolved
     raised_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assigned_to = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
